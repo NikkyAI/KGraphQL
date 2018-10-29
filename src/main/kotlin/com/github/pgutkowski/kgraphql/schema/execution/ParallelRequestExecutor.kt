@@ -19,7 +19,7 @@ import com.github.pgutkowski.kgraphql.schema.structure2.Field
 import com.github.pgutkowski.kgraphql.schema.structure2.InputValue
 import com.github.pgutkowski.kgraphql.schema.structure2.Type
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.defer
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlin.reflect.KProperty1
@@ -44,7 +44,7 @@ class ParallelRequestExecutor(val schema: DefaultSchema) : RequestExecutor {
         }
     }
 
-    override suspend fun suspendExecute(plan : ExecutionPlan, variables: VariablesJson, context: Context) : String {
+    override suspend fun suspendExecute(plan : ExecutionPlan, variables: VariablesJson, context: Context) : String = coroutineScope {
      val root = jsonNodeFactory.objectNode()
         val data = root.putObject("data")
         val channel = Channel<Pair<Execution, JsonNode>>()
@@ -82,7 +82,7 @@ class ParallelRequestExecutor(val schema: DefaultSchema) : RequestExecutor {
             data.set(operation.aliasOrKey, resultMap[operation])
         }
 
-        return objectWriter.writeValueAsString(root)
+        objectWriter.writeValueAsString(root)
     }
 
     override fun execute(plan : ExecutionPlan, variables: VariablesJson, context: Context) : String = runBlocking {
